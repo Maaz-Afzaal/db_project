@@ -41,35 +41,62 @@ app.post("/login",(req,res)=>{
 })
 
 app.post("/insertschedule",(req,res)=>{
-    let query=(req.body.event=="quiz")?`begin;
-    insert into timing (start_at,end_at,on_date)
-    values("${req.body.start_at}","${req.body.end_at}","${req.body.on_date}");
-    INSERT INTO class_occupied ( t_id, event, class_name, quiz_details, subject_name,sec_id,hold_by_id)
-    select LAST_INSERT_ID(),"quiz","${req.body.class_name}","${req.body.quiz_details}","${req.body.subject_name}",sec_id,p_id from section join person 
-    where sec_name="${req.body.sec_name}" && session="${req.body.session}" && p_id="${req.body.p_id}";
-    commit;`:
-    `begin;
-    insert into timing (start_at,end_at,on_date)
-    values("${req.body.start_at}","${req.body.end_at}","${req.body.on_date}");
-    INSERT INTO class_occupied ( t_id, event, class_name, subject_name,sec_id,hold_by_id)
-    select LAST_INSERT_ID(),"class","${req.body.class_name}","${req.body.subject_name}",sec_id,p_id from section join person 
-    where sec_name="${req.body.sec_name}" && session="${req.body.session}" && p_id="${req.body.p_id}";
-    commit;`
-    con.query(query,(err,result)=>{
+    let query_1=`select * from timing where start_at="${req.body.start_at}" && on_date="${req.body.on_date}"`;
+    let query;
+    con.query(query_1,(err,result)=>{
         if(err){
             res.status(400);
             res.json({err:err.sqlMessage});
             return;
         }
-        res.status(200);
-        // const res_result={...result[0],destinationsVisited:result.length};
-        res.json({message:result})
+        else if(result.length==0){
+             query=(req.body.event=="quiz")?`begin;
+                insert into timing (start_at,end_at,on_date)
+                values("${req.body.start_at}","${req.body.end_at}","${req.body.on_date}");
+                INSERT INTO class_occupied ( t_id, event, class_name, quiz_details, subject_name,sec_id,hold_by_id)
+                select LAST_INSERT_ID(),"quiz","${req.body.class_name}","${req.body.quiz_details}","${req.body.subject_name}",sec_id,p_id from section join person 
+                where sec_name="${req.body.sec_name}" && session="${req.body.session}" && p_id="${req.body.p_id}";
+                commit;`:
+                `begin;
+                insert into timing (start_at,end_at,on_date)
+                values("${req.body.start_at}","${req.body.end_at}","${req.body.on_date}");
+                INSERT INTO class_occupied ( t_id, event, class_name, subject_name,sec_id,hold_by_id)
+                select LAST_INSERT_ID(),"class","${req.body.class_name}","${req.body.subject_name}",sec_id,p_id from section join person 
+                where sec_name="${req.body.sec_name}" && session="${req.body.session}" && p_id="${req.body.p_id}";
+                commit;`
+        }
+        else{
+            query=(req.body.event=="quiz")?`begin;
+           
+            INSERT INTO class_occupied ( t_id, event, class_name, quiz_details, subject_name,sec_id,hold_by_id)
+            select "${result[0].t_id}","quiz","${req.body.class_name}","${req.body.quiz_details}","${req.body.subject_name}",sec_id,p_id from section join person 
+            where sec_name="${req.body.sec_name}" && session="${req.body.session}" && p_id="${req.body.p_id}";
+            commit;`:
+            `begin;
+           
+            INSERT INTO class_occupied ( t_id, event, class_name, subject_name,sec_id,hold_by_id)
+            select "${result[0].t_id}","class","${req.body.class_name}","${req.body.subject_name}",sec_id,p_id from section join person 
+            where sec_name="${req.body.sec_name}" && session="${req.body.session}" && p_id="${req.body.p_id}";
+            commit;`
+        }
+        con.query(query,(err,result)=>{
+            if(err){
+                res.status(400);
+                res.json({err:err.sqlMessage});
+                return;
+            }
+            res.status(200);
+    
+            res.json({message:result})
+        })
     })
+   
+  
 });
 
-app.get("getscheduleteacher/:id",(req,res)=>{
-    let query=`select start_at,end_at,on_date,class_name,sec_name,session,name,event,quiz_details,subject_name from class_occupied 
-    join timing ON class_occupied.t_id=timing.t_id JOIN section ON section.sec_id=class_occupied.sec_id join person ON person.p_id=class_occupied.hold_by_id where hold_by_id="${req.params.id}";`
+app.get("/getscheduleteacher/:id",(req,res)=>{
+    let query=`select start_at,end_at,on_date,class_name,sec_name,session,event,quiz_details,subject_name from class_occupied 
+    join timing ON class_occupied.t_id=timing.t_id JOIN section ON section.sec_id=class_occupied.sec_id where hold_by_id=${req.params.id} ;`
     con.query(query,(err,result)=>{
         if(err){
             res.status(400);
@@ -77,13 +104,13 @@ app.get("getscheduleteacher/:id",(req,res)=>{
             return;
         }
         res.status(200);
-        // const res_result={...result[0],destinationsVisited:result.length};
+
         res.json({message:result})
     })
 });
-app.get("getstudentschedule/:id",(req,res)=>{
+app.get("/getsectionschedule/:id",(req,res)=>{
     let query=`select start_at,end_at,on_date,class_name,sec_name,session,event,quiz_details,subject_name from class_occupied 
-    join timing ON class_occupied.t_id=timing.t_id JOIN section ON section.sec_id=class_occupied.sec_id join person_section ON person_section.sec_id=class_occupied.sec_id where p_id="${req.params.id}";`
+    join timing ON class_occupied.t_id=timing.t_id JOIN section ON section.sec_id=class_occupied.sec_id where class_occupied.sec_id=${req.params.id}`
     con.query(query,(err,result)=>{
         if(err){
             res.status(400);
@@ -91,7 +118,7 @@ app.get("getstudentschedule/:id",(req,res)=>{
             return;
         }
         res.status(200);
-        // const res_result={...result[0],destinationsVisited:result.length};
+      
         res.json({message:result})
     })
 })
