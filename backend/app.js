@@ -1,11 +1,14 @@
 const express=require('express');
 const mysql=require("mysql2");
-const con=require("./connections/connect");
+const con=require("./connections/connect.js");
 const app=express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/",(req,res)=>{
+    res.send("Running");
+})
 app.post('/signup', function (req, res) {
     
     let sql=(req.body.role=="student")?`insert into person (p_role,name,email,unique_password,roll_number) values ("${req.body.role}","${req.body.name}","${req.body.email}","${req.body.password}","${req.body.roll_number}")`:
@@ -94,9 +97,9 @@ app.post("/insertschedule",(req,res)=>{
   
 });
 
-app.get("/getscheduleteacher/:id",(req,res)=>{
+app.get("/getschedule/:id",(req,res)=>{
     let query=`select start_at,end_at,on_date,class_name,sec_name,session,event,quiz_details,subject_name from class_occupied 
-    join timing ON class_occupied.t_id=timing.t_id JOIN section ON section.sec_id=class_occupied.sec_id where hold_by_id=${req.params.id} ;`
+    join timing ON class_occupied.t_id=timing.t_id JOIN section ON section.sec_id=class_occupied.sec_id where ${req.query.role=="teacher"?`hold_by_id=${req.params.id}`:`class_occupied.sec_id=${req.params.id}`} ;`
     con.query(query,(err,result)=>{
         if(err){
             res.status(400);
@@ -108,9 +111,10 @@ app.get("/getscheduleteacher/:id",(req,res)=>{
         res.json({message:result})
     })
 });
-app.get("/getsectionschedule/:id",(req,res)=>{
-    let query=`select start_at,end_at,on_date,class_name,sec_name,session,event,quiz_details,subject_name from class_occupied 
-    join timing ON class_occupied.t_id=timing.t_id JOIN section ON section.sec_id=class_occupied.sec_id where class_occupied.sec_id=${req.params.id}`
+
+
+app.post("/insertassignment",(req,res)=>{
+    let query=`insert into assignment (assigned_by,is_project,details,subject_name,sec_id) values ("${req.body.assigned_by}",${req.body.is_project},"${req.body.details}","${req.body.subject_name}","${req.body.sec_id}")`
     con.query(query,(err,result)=>{
         if(err){
             res.status(400);
@@ -121,8 +125,92 @@ app.get("/getsectionschedule/:id",(req,res)=>{
       
         res.json({message:result})
     })
-})
-app.listen(8000,()=>{
+});
+app.get("/getasignments/:id",(req,res)=>{
+    let query=`select * from assignment where ${req.query.role=="student"?`sec_id=${req.params.id}`:`assigned_by=${req.params.id}`}`;
+    con.query(query,(err,result)=>{
+        if(err){
+            res.status(400);
+            res.json({err:err.sqlMessage});
+            return;
+        }
+        res.status(200);
+      
+        res.json({message:result})
+    })
+});
+app.post("/inserttodo",(req,res)=>{
+    let query=`insert into todo(p_id,details) values("${req.body.p_id}","${req.body.details}")`;
+    con.query(query,(err,result)=>{
+        if(err){
+            res.status(400);
+            res.json({err:err.sqlMessage});
+            return;
+        }
+        res.status(200);
+      
+        res.json({message:result})
+    })
+});
+
+app.get("/gettodo/:id",(req,res)=>{
+    let query=`select details from todo where p_id=${req.params.id}`;
+    con.query(query,(err,result)=>{
+        if(err){
+            res.status(400);
+            res.json({err:err.sqlMessage});
+            return;
+        }
+        res.status(200);
+      
+        res.json({message:result})
+    })
+});
+
+app.post("/uploadresult",(req,res)=>{
+    let query=`insert into result(p_id,uploaded_by_id,percentage,subject_name) values("${req.body.student_id}","${req.body.teacher_id}","${req.body.percentage}","${req.body.subject_name}")`;
+
+    con.query(query,(err,result)=>{
+        if(err){
+            res.status(400);
+            res.json({err:err.sqlMessage});
+            return;
+        }
+        res.status(200);
+      
+        res.json({message:result})
+    })
+});
+
+app.get("/getresult/:id",(req,res)=>{
+    let query=`select * from result where ${req.query.role=="student"?`p_id=${req.params.id}`:`uploaded_by_id=${req.params.id}`}`;
+    con.query(query,(err,result)=>{
+        if(err){
+            res.status(400);
+            res.json({err:err.sqlMessage});
+            return;
+        }
+        res.status(200);
+      
+        res.json({message:result})
+    })
+});
+
+app.get("/getallstudents",(req,res)=>{
+    let query=`select * from person where p_role="student"`;
+    con.query(query,(err,result)=>{
+        if(err){
+            res.status(400);
+            res.json({err:err.sqlMessage});
+            return;
+        }
+        res.status(200);
+      
+        res.json({message:result})
+    })
+});
+
+app.listen(process.env.PORT || 8000,()=>{
     console.log("started succesfuly");
 });
 
