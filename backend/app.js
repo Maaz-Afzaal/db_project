@@ -9,10 +9,34 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/",(req,res)=>{
     res.send("Running");
 })
+
+app.get("/getsection",(req,res)=>{
+    let query=`select * from section`
+    con.query(query,(err,result)=>{
+        if(err){
+            res.status(400);
+            res.json({err:err.sqlMessage});
+            return;
+        }
+        res.status(200);
+        res.json({message:result})
+    })
+})
 app.post('/signup', function (req, res) {
     
-    let sql=(req.body.role=="student")?`insert into person (p_role,name,email,unique_password,roll_number) values ("${req.body.role}","${req.body.name}","${req.body.email}","${req.body.password}","${req.body.roll_number}")`:
-    `insert into person (p_role,name,email,unique_password) values ("${req.body.role}","${req.body.name}","${req.body.email}","${req.body.password}")`
+    let sql=(req.body.role=="student")?`
+    begin;
+    insert into person (p_role,name,email,unique_password,roll_number) values ("${req.body.role}","${req.body.name}","${req.body.email}","${req.body.password}","${req.body.roll_number}");
+    insert into person_section (sec_id,p_id) "${req.body.sec_id}", LAST_INSERT_ID();
+    commit;
+    `:
+    `begin;
+    insert into person (p_role,name,email,unique_password) values ("${req.body.role}","${req.body.name}","${req.body.email}","${req.body.password}");
+    insert into section (sec_name,session) values  ${req.body.sec_name.map((s,i)=>{
+    return `( "${req.body.sec_name[i]}","${req.body.session[i]}")`
+    })};
+    commit;
+    `
     con.query(sql,(err,result)=>{
         if(err){
             res.status(400);
@@ -20,13 +44,12 @@ app.post('/signup', function (req, res) {
             return;
         }
         res.status(200);
-        // const res_result={...result[0],destinationsVisited:result.length};
         res.json({message:"entered sucesfuly"})
     })
 });
 
 app.post("/login",(req,res)=>{
-    let query=`select * from person where email="${req.body.email}" && unique_password="${req.body.password}"`
+    let query=`select * from person join person_section ON person_section.p_id=person.p_id where email="${req.body.email}" && unique_password="${req.body.password}"`
     con.query(query,(err,result)=>{
         if(err){
             res.status(400);
