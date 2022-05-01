@@ -5,6 +5,7 @@ export const getData=async (path,method,body)=>{
 		let headers={
             "Content-Type": "application/json",
             "Accept": "application/json",
+            'Access-Control-Allow-Headers': "Content-Type",
         };;
 		
 		let obj=method=="GET"?{method: `${method}`,

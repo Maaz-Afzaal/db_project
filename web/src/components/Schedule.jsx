@@ -1,4 +1,5 @@
 import React,{useState,useEffect} from "react";
+import { getData } from "./api";
 
 const Schedule=(props)=>{
 
@@ -16,11 +17,12 @@ const Schedule=(props)=>{
         p_id:userData.p_id ,
         event:"class",
     });
+    const [schedule,setSchedule]=useState()
     const [error,setError]=useState("");
     const [allSections,setAllSections]=useState(props.allSections);
     const handleScheduleSubmit=async (e)=>{
         e.preventDefault();
-        const {result,error}=await ("/insertschedule","POST",values);
+        const {result,error}=await getData("/insertschedule","POST",values);
         if(error){
             setError(JSON.stringify(error))
         }
@@ -28,11 +30,24 @@ const Schedule=(props)=>{
             alert("Schedule have been submitted")
         }
     }
- 
+    const getSchedule=async ()=>{
+        const {result,error}=await getData(`/getschedule/${userData.p_id}?role=${userData.p_role}`,"GET")
+        if(error){
+            setError(JSON.stringify(error))
+        }
+        else{
+            console.log(result)
+            setSchedule(result);
+        }
+    }
+    useEffect(()=>{
+        getSchedule();
+    },[])
     return(
         <>
-        <div className="btn btn-warning " onClick={()=>{setInsert(true)}}>Insert Schedule</div>
-        <div className="btn btn-warning ms-3" onClick={()=>{setInsert(false)}}>See Schedule</div>
+        {props.isTeacher && <>
+            <div className="btn btn-warning " onClick={()=>{setInsert(true)}}>Insert Schedule</div>
+        <div className="btn btn-warning ms-3" onClick={()=>{setInsert(false)}}>See Schedule</div></>}
             {
                 props.isTeacher && insert && <>
                 <p>PLease use hh:mm format for time and YYYY-MM-DD for date</p>
@@ -113,6 +128,43 @@ const Schedule=(props)=>{
                          
                 </>
             }
+            {!insert && <>
+                {schedule?.message?.length >0 && 
+                    schedule.message.map((sech,i)=>{
+                        return(
+                            <>
+                                <div className="border border-primary m-3 p-3">
+                                    <div>
+                                        <b>Subject:</b>{sech.subject_name}
+                                    </div>
+                                    <div>
+                                        <b>Class:</b>{sech.class_name}
+                                    </div>
+                                    <div>
+                                        <b>time:</b>({sech.start_at}-{sech.end_at})
+                                    </div>
+                                    <div>
+                                        <b>date:</b>(sech.on_date)
+                                    </div>
+                                    <div>
+                                        <b>event:</b>{sech.event}
+                                    </div>
+                                    {
+                                        sech.event=="quiz" && <>
+                                            <div>
+                                                <b>Quiz Details:</b>{sech.quiz_details}
+                                            </div>
+                                        </>
+                                    }
+                                    <div>
+                                        <b>Section:</b>{sech.sec_name}({sech.session})
+                                    </div>
+                                </div>
+                            </>
+                        )
+                    })
+                }
+            </>}
         </>
     )
 }
