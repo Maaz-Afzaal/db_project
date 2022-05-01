@@ -1,5 +1,30 @@
 import React,{useState} from "react";
 
+export const api=async (path,method,body)=>{
+	
+	try {
+		let headers={};
+		
+			headers={
+				"Content-Type": "application/json",
+				"Accept": "application/json",
+			};
+		const response = await fetch(`localhost:8000/${path}`, {
+			method: `${method}`,
+			headers: headers,
+			body: `${method==="GET"?null:JSON.stringify(body)}`
+		});
+		const json = await response.json();
+		if(response.ok){
+			return {result:json};
+		}
+	
+		return {error:json};
+	} catch (error) {
+		return {error,};
+	}
+};
+
 const DbTest=()=>{
     const [name,setName]=useState('');
     const [countryName,setCountryName]=useState('');
@@ -8,7 +33,7 @@ const DbTest=()=>{
     const [newTraveller,setNewTraveller]=useState({t_id:'',name:'',arrived_date:'',destination_id:''});
     const findTravellerData=(e,name)=>{
         e.preventDefault();
-        console.log(name);
+        
     }
     const findCountryData=(e,name)=>{
         e.preventDefault();

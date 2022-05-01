@@ -1,11 +1,18 @@
 const express=require('express');
 const mysql=require("mysql2");
+const cors=require("cors");
 const con=require("./connections/connect.js");
 const app=express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+var corsOptions = {
+    origin: 'http://localhost:3000',
+    optionsSuccessStatus: 200 // For legacy browser support
+}
+
+app.use(cors(corsOptions));
 app.get("/",(req,res)=>{
     res.send("Running");
 })
@@ -27,7 +34,7 @@ app.post('/signup', function (req, res) {
     let sql=(req.body.role=="student")?`
     begin;
     insert into person (p_role,name,email,unique_password,roll_number) values ("${req.body.role}","${req.body.name}","${req.body.email}","${req.body.password}","${req.body.roll_number}");
-    insert into person_section (sec_id,p_id) "${req.body.sec_id}", LAST_INSERT_ID();
+    insert into person_section (sec_id,p_id) select "${req.body.sec_id}", LAST_INSERT_ID();
     commit;
     `:
     `begin;
@@ -39,6 +46,7 @@ app.post('/signup', function (req, res) {
     `
     con.query(sql,(err,result)=>{
         if(err){
+            console.log(sql)
             res.status(400);
             res.json({err:err.sqlMessage});
             return;
@@ -49,7 +57,7 @@ app.post('/signup', function (req, res) {
 });
 
 app.post("/login",(req,res)=>{
-    let query=`select * from person join person_section ON person_section.p_id=person.p_id where email="${req.body.email}" && unique_password="${req.body.password}"`
+    let query=`select * from person where email="${req.body.email}" && unique_password="${req.body.password}"`
     con.query(query,(err,result)=>{
         if(err){
             res.status(400);
@@ -58,11 +66,33 @@ app.post("/login",(req,res)=>{
         }
         else if(result.length==0){
             res.status(404);
+            console.log(query);
             res.json({message:"not found"});
             return;
         }
-        res.status(200);
-        res.json({message:result}); 
+        else if(result[0].p_role==="student"){
+            let query_2=`select * from person_section where p_id=${result[0].p_id}`
+            con.query(query_2,(err,result_1)=>{
+                if(err){
+                    res.status(400);
+                    res.json({err:err.sqlMessage});
+                    return;
+                }
+                else{
+                    const res_result={...result[0],sec_id:result_1[0].sec_id};
+                    res.status(200);
+                    res.json({message:[res_result]});
+        
+                }
+            })
+        }
+        else{
+            res.status(200);
+            res.json({message:result});
+        }
+            
+        
+ 
     })
 })
 
