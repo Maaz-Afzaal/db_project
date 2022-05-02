@@ -18,7 +18,7 @@ app.get("/",(req,res)=>{
 })
 
 app.get("/getsection",(req,res)=>{
-    let query=`select * from section`
+    let query=`select * from section;`
     con.query(query,(err,result)=>{
         if(err){
             res.status(400);
@@ -193,7 +193,7 @@ app.get("/getasignments/:id",(req,res)=>{
     })
 });
 app.post("/inserttodo",(req,res)=>{
-    let query=`insert into todo(p_id,details) values("${req.body.p_id}","${req.body.details}")`;
+    let query=`insert into todo(p_id,details,todo_date) values("${req.body.p_id}","${req.body.details}","${req.body.date}")`;
     con.query(query,(err,result)=>{
         if(err){
             res.status(400);
@@ -207,7 +207,7 @@ app.post("/inserttodo",(req,res)=>{
 });
 
 app.get("/gettodo/:id",(req,res)=>{
-    let query=`select details from todo where p_id=${req.params.id}`;
+    let query=`select details,todo_date from todo where p_id=${req.params.id}`;
     con.query(query,(err,result)=>{
         if(err){
             res.status(400);

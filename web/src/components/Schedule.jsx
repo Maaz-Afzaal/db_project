@@ -4,7 +4,7 @@ import { getData } from "./api";
 const Schedule=(props)=>{
 
     const [userData,setUserData]=useState(props.userData);
-    const [insert,setInsert]=useState(true);
+    const [insert,setInsert]=useState(false);
     const [values,setValues]=useState({
         start_at:null,
         end_at:null,
@@ -22,13 +22,28 @@ const Schedule=(props)=>{
     const [allSections,setAllSections]=useState(props.allSections);
     const handleScheduleSubmit=async (e)=>{
         e.preventDefault();
-        const {result,error}=await getData("/insertschedule","POST",values);
-        if(error){
-            setError(JSON.stringify(error))
+        if(values.start_at && values.end_at && values.on_date && values.class_name && values.subject_name){
+            const {result,error}=await getData("/insertschedule","POST",values);
+            if(error){
+                setError(JSON.stringify(error))
+                setTimeout(()=>{
+                    setError("")
+                },[3000])
+            }
+            else{
+                setError("Schedule have been submitted");
+                setTimeout(()=>{
+                    setError("")
+                },[3000])
+            }
         }
         else{
-            alert("Schedule have been submitted")
+            setError("please fill all fields");
+            setTimeout(()=>{
+                setError("")
+            },[3000])
         }
+        
     }
     const getSchedule=async ()=>{
         const {result,error}=await getData(`/getschedule/${userData.p_id}?role=${userData.p_role}`,"GET")
@@ -42,7 +57,7 @@ const Schedule=(props)=>{
     }
     useEffect(()=>{
         getSchedule();
-    },[])
+    },[insert])
     return(
         <>
         {props.isTeacher && <>
@@ -54,19 +69,19 @@ const Schedule=(props)=>{
                      <form onSubmit={(e)=>{handleScheduleSubmit(e)}} className="d-flex flex-column">
                      <label className="m-3">
                             Lecture Start at:
-                            <input onChange={e=>
+                            <input type={"time"} onChange={e=>
                                 setValues({...values,start_at:e.target.value})
                             }></input>
                         </label>
                         <label className="m-3">
                             Lecture End at:
-                            <input onChange={e=>
+                            <input type={"time"} onChange={e=>
                                 setValues({...values,end_at:e.target.value})
                             }></input>
                         </label>
                         <label className="m-3">
                             Date:
-                            <input onChange={e=>
+                            <input type={"date"} onChange={e=>
                                 setValues({...values,on_date:e.target.value})
                             }></input>
                         </label>
@@ -128,12 +143,12 @@ const Schedule=(props)=>{
                          
                 </>
             }
-            {!insert && <>
+            {!insert && <div className="row" >
                 {schedule?.message?.length >0 && 
                     schedule.message.map((sech,i)=>{
                         return(
                             <>
-                                <div className="border border-primary m-3 p-3">
+                                <div className="border border-primary m-4 p-3 col-3">
                                     <div>
                                         <b>Subject:</b>{sech.subject_name}
                                     </div>
@@ -144,7 +159,7 @@ const Schedule=(props)=>{
                                         <b>time:</b>({sech.start_at}-{sech.end_at})
                                     </div>
                                     <div>
-                                        <b>date:</b>(sech.on_date)
+                                        <b>date:</b>{sech.on_date.slice(0,10)}
                                     </div>
                                     <div>
                                         <b>event:</b>{sech.event}
@@ -164,7 +179,12 @@ const Schedule=(props)=>{
                         )
                     })
                 }
-            </>}
+            </div>}
+            {
+                error &&  <div className="border border-danger" style={{color:"red"}}>
+                {error}</div>
+            }
+           
         </>
     )
 }

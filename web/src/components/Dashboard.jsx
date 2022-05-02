@@ -2,6 +2,8 @@ import { Navigate, useNavigate, useParams } from "react-router-dom"
 import React,{useState,useEffect} from "react";
 import { getData } from "./api";
 import Schedule from "./Schedule";
+import ToDo from "./ToDo";
+import Assignment from "./Assignment";
 const Dashboard=()=>{
     const [userData,setUserData]=useState();
     const [isTeacher,setIsTeacher]=useState(false);
@@ -18,6 +20,7 @@ const Dashboard=()=>{
         const {result,error}=await getData("/getsection","GET",{})
         if(error){
            setError("Failed to fetch Section List")
+           navigate("/")
         }
         else if(result){
            setAllSections(result.message);
@@ -108,6 +111,16 @@ const Dashboard=()=>{
                 {
                     currentState===AppState.SCHEDULE && <>
                     <Schedule isTeacher={isTeacher} userData={userData} allSections={allSections}/>
+                    </>
+                }
+                {
+                    currentState===AppState.TODO && <>
+                    <ToDo isTeacher={isTeacher} userData={userData} allSections={allSections}/>
+                    </>
+                }
+                 {
+                    currentState===AppState.ASSIGNMENT && <>
+                    <Assignment isTeacher={isTeacher} userData={userData} allSections={allSections}/>
                     </>
                 }
             {error}

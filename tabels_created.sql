@@ -25,8 +25,9 @@ create table assignment(a_id int primary key auto_increment,assigned_by int,fore
 	details longtext,subject_name varchar(100),sec_id int,foreign key(sec_id) references section(sec_id));
 create unique index unique_section_session
 	ON section (sec_name,session);
-create table todo(p_id int,foreign key(p_id) references person(p_id),todo_id int primary key auto_increment,details longtext);
-
+ 
+create table todo(p_id int,foreign key(p_id) references person(p_id),todo_id int primary key auto_increment,details longtext,todo_date DATE);
+Create unique index unique_todo ON todo(p_id,details);
 create table result(r_id int primary key auto_increment,p_id int,
 uploaded_by_id int,foreign key(uploaded_by_id) references person(p_id),
 foreign key(p_id) references person(p_id),
@@ -46,8 +47,8 @@ join timing ON class_occupied.t_id=timing.t_id JOIN section ON section.sec_id=cl
 
 select start_at,end_at,on_date,class_name,sec_name,session,event,quiz_details,subject_name from class_occupied 
 join timing ON class_occupied.t_id=timing.t_id JOIN section ON section.sec_id=class_occupied.sec_id where class_occupied.sec_id=1 ;
-select * from person_section where p_id=1;
+select * from person;
 insert into section (sec_name,session) values  ( C,2018),( D,2017);
-select * from person_section;
+select * from section;
 insert into assignment (assigned_by,is_project,details,subject_name,sec_id) values ("1",true,"asdas","database","1");
 select * from person join person_section ON person_section.p_id=person.p_id ;
