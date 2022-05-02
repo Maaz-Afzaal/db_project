@@ -1,9 +1,9 @@
 const mysql = require('mysql2');
 
-const HOST = 'localhost';
-const USER = 'root';
-const PASSWORD = 'root';
-const DBNAME = 'STUDENT_SCHEDULE_MANAGEMENT_SYSTEM';
+const HOST = 'remotemysql.com';
+const USER = 'jqoM6B1zHK';
+const PASSWORD = 'qnPALFY6r6';
+const DBNAME = 'jqoM6B1zHK';
 
 
 const con = mysql.createConnection({
@@ -16,7 +16,7 @@ const con = mysql.createConnection({
 
 con.connect(function(err) {
   if (err) {
-    console.log('ERROR: '+err.code);
+    console.log('ERROR: '+err);
     console.log('FATAL: '+err.fatal);
   }
 });
